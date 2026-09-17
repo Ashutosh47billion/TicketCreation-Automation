@@ -1,0 +1,21 @@
+{
+  "_comment": "Org-specific tuning for the roster-based assignee suggestion fallback (see main.py: suggest_assignees_from_roster). Edit freely for your org — no code changes needed.",
+
+  "_domain_keywords_comment": "Maps words found in a Team Roaster role (skills.md, lowercased) to a domain tag. A person can match more than one domain.",
+  "domain_keywords": {
+    "frontend": ["frontend"],
+    "backend": ["backend"],
+    "qa": ["qa"],
+    "product": ["product manager", "cto"],
+    "release": ["release manager"]
+  },
+
+  "_label_to_domain_comment": "Maps a GitHub label name (lowercased) to the domain that owns it. Only labels with an unambiguous domain owner belong here — most labels in a typical repo (marketing/sales/admin/etc.) aren't engineering-domain labels at all and should be left out.",
+  "label_to_domain": {
+    "frontend": "frontend",
+    "mobile app": "frontend",
+    "backend": "backend",
+    "devops": "backend",
+    "operations": "backend"
+  }
+}

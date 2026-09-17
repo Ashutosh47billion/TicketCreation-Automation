@@ -1,0 +1,15 @@
+services:
+  ticket-hub:
+    build: .
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    volumes:
+      # ticket_log.json must exist on the host first (e.g. `echo [] > ticket_log.json`
+      # if you don't have one yet) — mounting a single file requires the source to
+      # already exist, or Docker creates a directory there instead.
+      - ./ticket_log.json:/app/ticket_log.json
+      - ./config/roster_domains.json:/app/config/roster_domains.json
+      - ./skills/skills.md:/app/skills/skills.md
+    restart: unless-stopped

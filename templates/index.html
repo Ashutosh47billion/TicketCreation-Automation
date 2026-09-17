@@ -1,0 +1,1329 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Ticket Hub</title>
+<style>
+  :root {
+    --bg: #0a0c11; --bg-2: #0e1116;
+    --panel: #151923; --panel-2: #1b2029; --panel-border: #262c3a;
+    --border: #262c3a; --border-soft: #1d222d;
+    --text: #eef0f5; --muted: #8b93a7; --muted-2: #5f6779;
+    --accent: #5b8cff; --accent-2: #8b6bff; --accent-soft: rgba(91,140,255,.12);
+    --ok: #34d399; --ok-soft: rgba(52,211,153,.13);
+    --warn: #f5b350; --warn-soft: rgba(245,179,80,.12);
+    --err: #f56565; --err-soft: rgba(245,101,101,.13);
+    --radius: 12px; --radius-sm: 8px;
+    --shadow: 0 4px 16px rgba(0,0,0,.28);
+  }
+  * { box-sizing: border-box; }
+  body {
+    background:
+      radial-gradient(900px 420px at 15% -10%, rgba(91,140,255,.05), transparent 60%),
+      radial-gradient(700px 380px at 100% 0%, rgba(139,107,255,.035), transparent 55%),
+      var(--bg);
+    color: var(--text); font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    margin: 0; padding: 28px; line-height: 1.45; -webkit-font-smoothing: antialiased;
+  }
+  .app-header { max-width: 1400px; margin: 0 auto 22px; display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .app-header .mark {
+    width: 34px; height: 34px; border-radius: 10px; flex: none;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    display: inline-flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 15px; color: white; box-shadow: 0 2px 8px rgba(91,140,255,.22);
+  }
+  h1 { font-size: 21px; margin: 0; font-weight: 650; letter-spacing: -.01em; }
+  .subtitle { color: var(--muted); font-size: 13px; width: 100%; margin-top: -4px; }
+  .subtitle b { color: var(--warn); font-weight: 600; }
+
+  .container { max-width: 1400px; margin: 0 auto; }
+  .layout { display: grid; grid-template-columns: 1fr 420px; gap: 20px; max-width: 1400px; margin: 0 auto; align-items: start; }
+
+  .panel {
+    background: linear-gradient(180deg, var(--panel), var(--panel-2) 140%);
+    border: 1px solid var(--panel-border); border-radius: var(--radius);
+    padding: 20px; margin-bottom: 16px; box-shadow: var(--shadow);
+  }
+  .panel h2 {
+    font-size: 12px; text-transform: uppercase; letter-spacing: .07em; font-weight: 700;
+    color: var(--muted); margin: 0 0 16px; display: flex; align-items: center; gap: 8px;
+  }
+  .panel h2 .step {
+    width: 20px; height: 20px; border-radius: 6px; background: var(--accent-soft); color: var(--accent);
+    display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800;
+  }
+
+  label { display: block; font-size: 12.5px; margin: 14px 0 6px; color: var(--muted); font-weight: 500; }
+  label:first-child { margin-top: 0; }
+  input[type=text], input[type=file], textarea, select {
+    width: 100%; background: var(--bg-2); border: 1px solid var(--border); color: var(--text);
+    border-radius: var(--radius-sm); padding: 9px 11px; font-size: 13px; font-family: inherit;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  input[type=text]:focus, textarea:focus, select:focus {
+    outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  textarea { min-height: 70px; resize: vertical; }
+  .row { display: flex; gap: 10px; }
+  .row > * { flex: 1; }
+
+  .tabs { display: flex; gap: 6px; margin-bottom: 16px; max-width: 1400px; margin-left: auto; margin-right: auto;
+    background: var(--panel); border: 1px solid var(--panel-border); border-radius: 999px; padding: 4px; width: fit-content; }
+  .tab, .subtab {
+    padding: 8px 16px; border-radius: 999px; border: none; cursor: pointer; font-size: 13px; font-weight: 550;
+    background: transparent; color: var(--muted); transition: background .15s, color .15s;
+  }
+  .subtab { border-radius: var(--radius-sm); background: var(--bg-2); border: 1px solid var(--border); }
+  .tab:hover, .subtab:hover { color: var(--text); }
+  .tab.active, .subtab.active {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: white;
+    box-shadow: 0 2px 6px rgba(91,140,255,.22);
+  }
+
+  button {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: white; border: none;
+    border-radius: var(--radius-sm); padding: 9px 18px; font-size: 13px; font-weight: 600; cursor: pointer;
+    margin-top: 12px; margin-right: 8px; transition: filter .12s, box-shadow .15s, opacity .15s;
+    box-shadow: 0 2px 6px rgba(91,140,255,.2); text-transform: capitalize;
+  }
+  button:hover:not(:disabled) { filter: brightness(1.08); box-shadow: 0 3px 10px rgba(91,140,255,.28); }
+  button:active:not(:disabled) { filter: brightness(0.96); }
+  button.secondary { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); box-shadow: none; }
+  button.secondary:hover:not(:disabled) { border-color: var(--muted-2); filter: none; }
+  button.danger { background: var(--err); box-shadow: 0 2px 6px rgba(245,101,101,.22); }
+  button:disabled { opacity: .38; cursor: not-allowed; filter: none; box-shadow: none; }
+
+  .checkbox-list {
+    max-height: 190px; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 6px; background: var(--bg-2);
+  }
+  .checkbox-list.locked, select.locked { opacity: .55; }
+  .checkbox-list.locked input, .checkbox-list.locked label { cursor: not-allowed; }
+  label.is-disabled { opacity: .35; cursor: not-allowed; }
+  input.list-search { margin-bottom: 6px; padding: 7px 10px; font-size: 12.5px; }
+
+  .dropzone {
+    border: 1.5px dashed var(--border); border-radius: var(--radius-sm); background: var(--bg-2);
+    padding: 18px; text-align: center; cursor: pointer; transition: border-color .15s, background .15s;
+  }
+  .dropzone:hover, .dropzone:focus { border-color: var(--muted-2); outline: none; }
+  .dropzone.drag-over { border-color: var(--accent); background: var(--accent-soft); }
+  .dropzone-hint { color: var(--muted); font-size: 12.5px; }
+  .dropzone img { display: none; max-width: 100%; max-height: 160px; border-radius: 6px; margin-bottom: 10px; }
+  .checkbox-list label {
+    display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text);
+    margin: 0; padding: 6px 8px; border-radius: 6px; transition: background .1s;
+  }
+  .checkbox-list label:hover { background: rgba(255,255,255,.03); }
+  .checkbox-list input { width: auto; accent-color: var(--accent); }
+  .suggested {
+    color: var(--ok); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+    background: var(--ok-soft); padding: 2px 6px; border-radius: 999px; margin-left: auto;
+  }
+
+  pre.preview {
+    white-space: pre-wrap; background: var(--bg-2); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 14px; font-size: 12.5px; max-height: 340px; overflow-y: auto; color: #cdd3e0;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  .badge { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 11px; margin-left: 8px; font-weight: 600; }
+  .badge.ok { background: var(--ok-soft); color: var(--ok); }
+  .badge.err { background: var(--err-soft); color: var(--err); }
+  .badge.neutral { background: rgba(255,255,255,.06); color: var(--muted); }
+
+  .dry-run-toggle {
+    display: flex; align-items: center; gap: 10px; background: var(--warn-soft); border: 1px solid rgba(245,179,80,.35);
+    border-radius: var(--radius-sm); padding: 11px 14px; margin-top: 14px;
+  }
+  .dry-run-toggle input { width: auto; accent-color: var(--warn); }
+  .warn-text { color: var(--warn); font-size: 12px; font-weight: 600; margin-top: 8px; }
+
+  .msg { font-size: 12.5px; padding: 9px 12px; border-radius: var(--radius-sm); margin-top: 10px; }
+  .msg.ok { background: var(--ok-soft); color: var(--ok); }
+  .msg.err { background: var(--err-soft); color: var(--err); }
+
+  .batch-item {
+    border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 9px 12px; margin-bottom: 6px;
+    display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; background: var(--bg-2);
+  }
+  .batch-item .meta { color: var(--muted); display: flex; align-items: center; gap: 8px; }
+  .small { font-size: 11.5px; color: var(--muted); }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  ::-webkit-scrollbar { width: 9px; height: 9px; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+
+  /* ---- Bulk Manage tab ---- */
+  .filter-group { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px; background: var(--bg-2); }
+  .filter-group .chip {
+    display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; padding: 6px 10px; margin: 3px;
+    border-radius: 999px; border: 1px solid var(--border); background: var(--panel-2); cursor: pointer; user-select: none;
+  }
+  .filter-group .chip input { accent-color: var(--accent); }
+  .filter-group .chip.checked { border-color: var(--accent); background: var(--accent-soft); color: var(--text); }
+  table.board-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  table.board-table th {
+    text-align: left; color: var(--muted); font-weight: 600; text-transform: uppercase; font-size: 10.5px;
+    letter-spacing: .05em; padding: 8px 10px; border-bottom: 1px solid var(--border);
+  }
+  table.board-table td { padding: 9px 10px; border-bottom: 1px solid var(--border-soft); vertical-align: top; }
+  table.board-table tr:hover td { background: rgba(255,255,255,.02); }
+  table.board-table td input[type=checkbox] { accent-color: var(--accent); }
+  .swimlane-pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 600; background: rgba(255,255,255,.06); }
+  .label-chip { display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: 10.5px; background: rgba(255,255,255,.06); color: var(--muted); margin: 1px 2px 1px 0; }
+  .board-scroll { max-height: 480px; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius-sm); }
+  .action-block { border-top: 1px solid var(--border-soft); padding-top: 14px; margin-top: 14px; }
+  .action-block:first-child { border-top: none; padding-top: 0; margin-top: 0; }
+  .action-block > label:first-child { display: flex; align-items: center; gap: 8px; margin-top: 0; color: var(--text); font-size: 13px; font-weight: 600; }
+  .action-block > label:first-child input { width: auto; accent-color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="app-header">
+  <span class="mark">T</span>
+  <h1>Ticket Hub</h1>
+  <div class="subtitle">Create, batch-generate, and bulk-manage GitHub tickets with AI-assisted drafting. Every action previews as a <b>dry run</b> until you explicitly confirm it.</div>
+</div>
+
+<div class="container">
+  <div class="panel" id="connect-panel" style="margin-bottom:16px">
+    <h2><span class="step">•</span> Connected Repo</h2>
+    <div id="connect-status-line" class="small" style="margin-bottom:10px">Loading…</div>
+    <div class="row">
+      <div><label>Owner / Org</label><input type="text" id="connect-owner" placeholder="e.g. my-org" disabled></div>
+      <div><label>Repository</label><input type="text" id="connect-repo" placeholder="e.g. my-repo" disabled></div>
+      <div><label>Project name (optional)</label><input type="text" id="connect-project" placeholder="auto-picks the only one if unset" disabled></div>
+    </div>
+    <label>GitHub Token</label>
+    <input type="password" id="connect-token" placeholder="(unchanged)" autocomplete="off" disabled>
+    <button id="connect-edit-btn" class="secondary">Edit</button>
+    <button id="connect-save-btn" style="display:none">Save</button>
+    <button id="connect-cancel-btn" class="secondary" style="display:none">Cancel</button>
+    <span id="connect-result"></span>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-mode="single">New Ticket</div>
+  <div class="tab" data-mode="batch" style="display:none">Batch Create</div>
+  <div class="tab" data-mode="bulk">Manage Tickets</div>
+  <div class="tab" data-mode="log">History</div>
+</div>
+
+<div class="container">
+<div style="display:flex; align-items:center; gap:10px; margin-bottom:14px; flex-wrap:wrap">
+  <span class="small" style="font-weight:600; color:var(--text)">AI provider</span>
+  <select id="ai-provider-select" style="width:auto; min-width:170px"></select>
+  <span id="ai-provider-status" class="small"></span>
+</div>
+
+<div class="dry-run-toggle" style="border-color: var(--accent); background: var(--accent-soft)">
+  <input type="checkbox" id="auto-mode-toggle" checked>
+  <label style="margin:0" for="auto-mode-toggle">Auto-apply suggested labels / assignees / milestone (hands-off) — uncheck to pick manually</label>
+</div>
+
+<div id="config-warning"></div>
+</div>
+
+<div class="layout" id="single-view">
+  <div>
+    <div class="panel">
+      <h2><span class="step">1</span> Ticket</h2>
+      <div class="row">
+        <div>
+          <label>Type</label>
+          <select id="type-select"></select>
+        </div>
+        <div>
+          <label>Entry mode</label>
+          <select id="entry-mode">
+            <option value="ai">AI-assisted</option>
+            <option value="manual">Manual entry</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="ai-block">
+        <label>Describe the issue</label>
+        <textarea id="ai-story" placeholder="Rough notes are fine — AI fills the full template."></textarea>
+        <label>Screenshot (optional)</label>
+        <div class="dropzone" id="ai-dropzone" tabindex="0">
+          <input type="file" id="ai-screenshot" accept="image/*" style="display:none">
+          <img id="ai-screenshot-preview" style="display:none">
+          <div class="dropzone-hint">Drag &amp; drop an image, click to browse, or paste (Ctrl/Cmd+V)</div>
+        </div>
+        <span id="ai-screenshot-status" class="small"></span>
+        <button id="ai-generate-btn" disabled>Generate draft</button>
+        <span id="ai-status"></span>
+      </div>
+
+      <label>Title</label>
+      <input type="text" id="title-input" placeholder="Ticket title">
+      <div id="dup-warning" class="msg" style="display:none"></div>
+
+      <div id="fields-block"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Preview</h2>
+      <button id="preview-btn" class="secondary">Refresh preview</button>
+      <pre class="preview" id="preview-body">(nothing yet)</pre>
+    </div>
+  </div>
+
+  <div>
+    <div class="panel">
+      <h2><span class="step">2</span> Labels</h2>
+      <input type="text" class="list-search" id="labels-search" placeholder="Search labels…">
+      <div class="checkbox-list" id="labels-list"></div>
+    </div>
+    <div class="panel">
+      <h2><span class="step">3</span> Assignees</h2>
+      <input type="text" class="list-search" id="assignees-search" placeholder="Search assignees…">
+      <div class="checkbox-list" id="assignees-list"></div>
+    </div>
+    <div class="panel">
+      <h2><span class="step">4</span> Milestone</h2>
+      <select id="milestone-select"><option value="">(none)</option></select>
+    </div>
+    <div class="panel">
+      <h2><span class="step">5</span> Create</h2>
+      <div class="dry-run-toggle">
+        <input type="checkbox" id="dry-run-toggle" checked>
+        <label style="margin:0" for="dry-run-toggle">Dry run (preview only, no GitHub call)</label>
+      </div>
+      <div class="warn-text" id="live-warning" style="display:none">⚠ This will create a REAL issue on GitHub.</div>
+      <button id="create-btn" disabled>Create ticket</button>
+      <div id="create-result"></div>
+    </div>
+  </div>
+</div>
+
+<div class="layout" id="batch-view" style="display:none">
+  <div>
+    <div class="panel">
+      <h2>Batch setup</h2>
+      <div class="row">
+        <div>
+          <label>Type (shared across batch)</label>
+          <select id="batch-type-select"></select>
+        </div>
+        <div>
+          <label>Milestone (shared across batch)</label>
+          <select id="batch-milestone-select"><option value="">(none)</option></select>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Add bugs</h2>
+      <div class="row" style="margin-bottom:10px">
+        <div class="subtab active" id="batch-submode-paste" data-submode="paste">Paste all at once</div>
+        <div class="subtab" id="batch-submode-one" data-submode="one">One at a time</div>
+      </div>
+
+      <div id="batch-paste-block">
+        <label>Paste all your notes for this batch (one issue per line/paragraph is fine — AI splits them)</label>
+        <textarea id="batch-paste-notes" style="min-height:120px"></textarea>
+        <button id="batch-split-btn" disabled>Split &amp; generate drafts</button>
+        <span id="batch-split-status"></span>
+        <div id="batch-pending-list"></div>
+      </div>
+
+      <div id="batch-one-block" style="display:none">
+        <label>Describe the issue</label>
+        <textarea id="batch-story"></textarea>
+        <label>Screenshot (optional)</label>
+        <div class="dropzone" id="batch-dropzone" tabindex="0">
+          <input type="file" id="batch-screenshot" accept="image/*" style="display:none">
+          <img id="batch-screenshot-preview" style="display:none">
+          <div class="dropzone-hint">Drag &amp; drop an image, click to browse, or paste (Ctrl/Cmd+V)</div>
+        </div>
+        <span id="batch-screenshot-status" class="small"></span>
+        <button id="batch-generate-btn" disabled>Generate draft</button>
+        <span id="batch-ai-status"></span>
+        <pre class="preview" id="batch-preview" style="display:none"></pre>
+        <div id="batch-draft-controls" style="display:none">
+          <label>Labels</label>
+          <input type="text" class="list-search" id="batch-labels-search" placeholder="Search labels…">
+          <div class="checkbox-list" id="batch-labels-list"></div>
+          <label>Assignees</label>
+          <input type="text" class="list-search" id="batch-assignees-search" placeholder="Search assignees…">
+          <div class="checkbox-list" id="batch-assignees-list"></div>
+          <button id="batch-add-btn">Add to batch</button>
+          <button id="batch-discard-btn" class="secondary">Discard draft</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="panel">
+      <h2>Batch (<span id="batch-count">0</span> ticket(s))</h2>
+      <div id="batch-list"></div>
+      <div class="dry-run-toggle">
+        <input type="checkbox" id="batch-dry-run-toggle" checked>
+        <label style="margin:0" for="batch-dry-run-toggle">Dry run (preview only, no GitHub calls)</label>
+      </div>
+      <div class="warn-text" id="batch-live-warning" style="display:none">⚠ This will create REAL issues on GitHub.</div>
+      <button id="batch-create-btn" disabled>Create all</button>
+      <div id="batch-create-result"></div>
+    </div>
+  </div>
+</div>
+
+<div class="layout" id="bulk-view" style="display:none; grid-template-columns: 380px 1fr;">
+  <div>
+    <div class="panel">
+      <h2><span class="step">1</span> Filter tickets</h2>
+      <label>Swimlane (matches ANY checked)</label>
+      <div class="filter-group" id="bulk-status-filter"></div>
+      <label>Current sprint (matches ANY checked) — the "from" sprint</label>
+      <div class="filter-group" id="bulk-milestone-filter" style="max-height:160px; overflow-y:auto"></div>
+      <label>Labels (matches ANY checked)</label>
+      <input type="text" class="list-search" id="bulk-label-filter-search" placeholder="Search labels…">
+      <div class="filter-group" id="bulk-label-filter" style="max-height:200px; overflow-y:auto"></div>
+      <button id="bulk-load-btn" disabled>Load matching tickets</button>
+      <div id="bulk-load-status" class="small" style="margin-top:8px"></div>
+    </div>
+
+    <div class="panel">
+      <h2><span class="step">2</span> Bulk actions</h2>
+
+      <div class="action-block">
+        <label><input type="checkbox" id="bulk-apply-milestone"> Move to sprint (destination)</label>
+        <select id="bulk-milestone-select" disabled><option value="">(none)</option></select>
+      </div>
+
+      <div class="action-block">
+        <label><input type="checkbox" id="bulk-apply-status"> Change swimlane</label>
+        <select id="bulk-status-select" disabled></select>
+      </div>
+
+      <div class="action-block">
+        <label style="font-size:13px; font-weight:600; color:var(--text)">Labels</label>
+        <label>Add label(s)</label>
+        <input type="text" class="list-search" id="bulk-add-labels-search" placeholder="Search labels…">
+        <div class="checkbox-list" id="bulk-add-labels-list" style="max-height:130px"></div>
+        <label>Remove label(s) — a label checked to Add is disabled here, and vice versa</label>
+        <input type="text" class="list-search" id="bulk-remove-labels-search" placeholder="Search labels…">
+        <div class="checkbox-list" id="bulk-remove-labels-list" style="max-height:130px"></div>
+      </div>
+
+      <div class="dry-run-toggle">
+        <input type="checkbox" id="bulk-dry-run-toggle" checked>
+        <label style="margin:0" for="bulk-dry-run-toggle">Dry run (preview only, no GitHub calls)</label>
+      </div>
+      <div class="warn-text" id="bulk-live-warning" style="display:none">⚠ This will modify REAL tickets on GitHub.</div>
+      <button id="bulk-apply-btn" disabled>Apply to 0 selected</button>
+      <div id="bulk-apply-result"></div>
+    </div>
+  </div>
+
+  <div>
+    <div class="panel">
+      <h2>Matching tickets (<span id="bulk-result-count">0</span>)</h2>
+      <div class="board-scroll">
+        <table class="board-table" id="bulk-table">
+          <thead>
+            <tr>
+              <th style="width:34px"><input type="checkbox" id="bulk-select-all"></th>
+              <th>Ticket</th>
+              <th>Swimlane</th>
+              <th>Labels</th>
+              <th>Sprint</th>
+            </tr>
+          </thead>
+          <tbody id="bulk-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="log-view" style="display:none; max-width:900px">
+  <h2>Recently Created Tickets</h2>
+  <button id="log-refresh-btn" class="secondary">Refresh</button>
+  <div id="log-list" style="margin-top:12px"></div>
+</div>
+
+<script>
+let CONFIG = null;
+let currentAiFields = null;   // fields from the last AI draft, single mode
+let batchDraft = null;        // current pending draft in batch mode (one-at-a-time entry)
+let batchTickets = [];        // accumulated batch, ready to create
+let batchRefData = null;      // last reference-data response for the batch type (labels/assignees/suggestions)
+let pendingBatchDrafts = [];  // drafts from a paste-all-at-once split, awaiting per-draft review
+let bulkMeta = null;           // board meta (status options, labels, milestones) for the Bulk Manage tab
+let bulkItems = [];            // currently-loaded (filtered) tickets in the Bulk Manage tab
+let connectEditing = false;    // Connect panel fields are locked unless actively being edited
+
+const $ = (id) => document.getElementById(id);
+
+async function loadConfig() {
+  const res = await fetch('/api/config');
+  CONFIG = await res.json();
+
+  const warnBox = $('config-warning');
+  warnBox.innerHTML = '';
+  if (!CONFIG.github_configured) {
+    warnBox.innerHTML += `<div class="msg err">Not connected to a GitHub repo yet: ${CONFIG.github_error || 'use the Connect panel above'}. Reference data, duplicate checks, and real creation are disabled — dry runs still work.</div>`;
+  }
+  if (!CONFIG.ai_configured) {
+    warnBox.innerHTML += `<div class="msg err">AI (${CONFIG.ai_provider}) not configured: set its API key in .env, or switch provider above, to use AI-assisted or batch mode.</div>`;
+  }
+
+  const providerLabels = { anthropic: 'Claude (Anthropic)', gemini: 'Google Gemini' };
+  const providerSelect = $('ai-provider-select');
+  providerSelect.innerHTML = Object.keys(providerLabels).map(p => {
+    const available = CONFIG.ai_providers_available[p];
+    return `<option value="${p}" ${p === CONFIG.ai_provider ? 'selected' : ''} ${available ? '' : 'disabled'}>${providerLabels[p]}${available ? '' : ' (no key configured)'}</option>`;
+  }).join('');
+  $('ai-provider-status').innerHTML = CONFIG.ai_configured
+    ? `<span style="color:var(--ok)">Ready</span>`
+    : `<span style="color:var(--err)">Not configured</span>`;
+
+  if (CONFIG.github_configured) {
+    $('connect-status-line').innerHTML = `<span style="color:var(--ok)">Connected</span> to <b>${CONFIG.current_owner}/${CONFIG.current_repo}</b>${CONFIG.current_project_name ? ' (project: ' + CONFIG.current_project_name + ')' : ''}`;
+  } else {
+    $('connect-status-line').innerHTML = `<span style="color:var(--warn)">Not connected</span> — click Edit to enter a repo and token.`;
+  }
+  if (!connectEditing) {
+    $('connect-owner').value = CONFIG.current_owner || '';
+    $('connect-repo').value = CONFIG.current_repo || '';
+    $('connect-project').value = CONFIG.current_project_name || '';
+    $('connect-token').value = '';
+    $('connect-token').placeholder = CONFIG.github_configured ? '(unchanged)' : 'ghp_... required';
+  }
+
+  const typeSelect = $('type-select');
+  const batchTypeSelect = $('batch-type-select');
+  typeSelect.innerHTML = '';
+  batchTypeSelect.innerHTML = '';
+  for (const key of Object.keys(CONFIG.types)) {
+    const opt = () => { const o = document.createElement('option'); o.value = key; o.textContent = CONFIG.types[key].display_name || key; return o; };
+    typeSelect.appendChild(opt());
+    batchTypeSelect.appendChild(opt());
+  }
+  if (!CONFIG.ai_configured) {
+    $('entry-mode').value = 'manual';
+    $('ai-block').style.display = 'none';
+  } else {
+    $('entry-mode').value = 'ai';
+    $('ai-block').style.display = 'block';
+  }
+}
+
+function fieldInputHtml(f) {
+  const id = 'field-' + f.key;
+  if (f.type === 'select') {
+    const opts = f.options.map(o => `<option value="${o}">${o}</option>`).join('');
+    return `<label>${f.label}</label><select id="${id}" data-key="${f.key}">${opts}</select>`;
+  }
+  if (f.type === 'multiline' || f.type === 'bullets') {
+    const hint = f.type === 'bullets' ? ' (one item per line)' : '';
+    return `<label>${f.label}${hint}</label><textarea id="${id}" data-key="${f.key}"></textarea>`;
+  }
+  const def = f.default || '';
+  return `<label>${f.label}</label><input type="text" id="${id}" data-key="${f.key}" placeholder="${def}">`;
+}
+
+function renderFields(typeKey) {
+  const tpl = CONFIG.types[typeKey];
+  $('fields-block').innerHTML = tpl.fields.map(fieldInputHtml).join('');
+}
+
+function collectFieldValues(typeKey) {
+  const tpl = CONFIG.types[typeKey];
+  const values = {};
+  for (const f of tpl.fields) {
+    const el = $('field-' + f.key);
+    values[f.key] = el ? el.value : '';
+  }
+  return values;
+}
+
+function fillFieldValues(typeKey, values) {
+  const tpl = CONFIG.types[typeKey];
+  for (const f of tpl.fields) {
+    const el = $('field-' + f.key);
+    if (el && values[f.key] !== undefined) el.value = values[f.key];
+  }
+}
+
+async function loadReferenceData(typeKey, labelsListId, assigneesListId, milestoneSelectId) {
+  const res = await fetch('/api/reference-data?type=' + encodeURIComponent(typeKey));
+  const data = await res.json();
+  if (data.error && !data.labels) {
+    $(labelsListId).innerHTML = `<span class="small">${data.error}</span>`;
+    $(assigneesListId).innerHTML = '';
+    return data;
+  }
+  $(labelsListId).innerHTML = data.labels.map(l => {
+    const suggested = data.suggested_labels.includes(l);
+    return `<label><input type="checkbox" value="${l}" ${suggested ? 'checked' : ''}>${l}${suggested ? '<span class="suggested">suggested</span>' : ''}</label>`;
+  }).join('') || '<span class="small">No labels found</span>';
+  $(assigneesListId).innerHTML = data.assignees.map(a => {
+    const suggested = data.suggested_assignees.includes(a);
+    return `<label><input type="checkbox" value="${a}" ${suggested ? 'checked' : ''}>${a}${suggested ? '<span class="suggested">suggested</span>' : ''}</label>`;
+  }).join('') || '<span class="small">No assignees found</span>';
+
+  const msSelect = $(milestoneSelectId);
+  msSelect.innerHTML = '<option value="">(none)</option>' + data.milestones.map(m =>
+    `<option value="${m.number}" ${m.title === data.suggested_milestone ? 'selected' : ''}>${m.title}</option>`
+  ).join('');
+
+  bringCheckedToTop($(labelsListId));
+  bringCheckedToTop($(assigneesListId));
+  applyAutoLock([labelsListId, assigneesListId], [milestoneSelectId]);
+  return data;
+}
+
+// Auto mode locks checkbox lists / selects to whatever's currently checked/selected
+// (the suggestions, pre-applied above) so nothing needs manual picking; unchecking
+// the global toggle unlocks them for normal interaction. Disabled inputs still
+// report their .checked/.value correctly, so create payloads need no other change.
+let autoModeOn = true;
+
+function applyAutoLock(listIds, selectIds) {
+  (listIds || []).forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.toggle('locked', autoModeOn);
+    el.querySelectorAll('input[type=checkbox]').forEach(cb => { cb.disabled = autoModeOn; });
+  });
+  (selectIds || []).forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.toggle('locked', autoModeOn);
+    el.disabled = autoModeOn;
+  });
+}
+
+$('ai-provider-select').addEventListener('change', async () => {
+  const provider = $('ai-provider-select').value;
+  $('ai-provider-status').textContent = 'Switching…';
+  const res = await fetch('/api/ai-provider', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ provider })
+  });
+  const data = await res.json();
+  if (!data.ok) {
+    $('ai-provider-status').innerHTML = `<span style="color:var(--err)">${data.error}</span>`;
+    await loadConfig();  // revert the select to whatever's actually active
+    return;
+  }
+  await loadConfig();
+});
+
+$('auto-mode-toggle').addEventListener('change', () => {
+  autoModeOn = $('auto-mode-toggle').checked;
+  applyAutoLock(['labels-list', 'assignees-list', 'batch-labels-list', 'batch-assignees-list'], ['milestone-select', 'batch-milestone-select']);
+  document.querySelectorAll('#batch-pending-list .checkbox-list').forEach(el => {
+    el.classList.toggle('locked', autoModeOn);
+    el.querySelectorAll('input[type=checkbox]').forEach(cb => { cb.disabled = autoModeOn; });
+  });
+});
+
+function getCheckedValues(listId) {
+  return Array.from(document.querySelectorAll('#' + listId + ' input:checked')).map(el => el.value);
+}
+
+// ---- checkbox-list UX: grouping, search, mutual exclusion ----
+
+// Moves checked rows to the top of a checkbox-list/filter-group, grouped together,
+// so a long list doesn't hide what you've already picked. appendChild on an
+// already-attached node MOVES it rather than cloning, so checked state, focus,
+// and listeners are all preserved — safe to call after any check/uncheck.
+function bringCheckedToTop(container) {
+  const rows = Array.from(container.querySelectorAll('label'));
+  rows.sort((a, b) => {
+    const ac = a.querySelector('input')?.checked ? 1 : 0;
+    const bc = b.querySelector('input')?.checked ? 1 : 0;
+    return bc - ac;
+  });
+  rows.forEach(r => container.appendChild(r));
+}
+
+// Wires a container ONCE so any checkbox change inside it re-sorts checked-to-top
+// forever after, even across future innerHTML rebuilds of its children (the
+// listener lives on the container itself, not the checkboxes).
+function wireCheckedToTop(container) {
+  if (!container) return;
+  container.addEventListener('change', (e) => {
+    if (e.target.type === 'checkbox') bringCheckedToTop(container);
+  });
+}
+
+// Filters visible rows of a checkbox-list by substring match against an adjacent
+// search box — hides non-matching rows without touching their checked state.
+function wireListSearch(inputEl, container) {
+  if (!inputEl || !container) return;
+  inputEl.addEventListener('input', () => {
+    const q = inputEl.value.trim().toLowerCase();
+    container.querySelectorAll('label').forEach(l => {
+      l.style.display = l.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+  });
+}
+
+// Add/Remove label lists are mutually exclusive: checking a label in one
+// disables (greys out) that same label in the other, so the same label can't
+// be both added and removed in one bulk action.
+function syncLabelExclusion(sourceContainer, targetContainer) {
+  const checkedInSource = new Set(Array.from(sourceContainer.querySelectorAll('input:checked')).map(el => el.value));
+  targetContainer.querySelectorAll('input[type=checkbox]').forEach(cb => {
+    const shouldDisable = checkedInSource.has(cb.value) && !cb.checked;
+    cb.disabled = shouldDisable;
+    cb.closest('label')?.classList.toggle('is-disabled', shouldDisable);
+  });
+}
+function wireLabelExclusion(listA, listB) {
+  listA.addEventListener('change', () => syncLabelExclusion(listA, listB));
+  listB.addEventListener('change', () => syncLabelExclusion(listB, listA));
+}
+
+[
+  'labels-list', 'assignees-list', 'batch-labels-list', 'batch-assignees-list',
+  'bulk-status-filter', 'bulk-milestone-filter', 'bulk-label-filter',
+  'bulk-add-labels-list', 'bulk-remove-labels-list',
+].forEach(id => wireCheckedToTop($(id)));
+
+wireListSearch($('labels-search'), $('labels-list'));
+wireListSearch($('assignees-search'), $('assignees-list'));
+wireListSearch($('batch-labels-search'), $('batch-labels-list'));
+wireListSearch($('batch-assignees-search'), $('batch-assignees-list'));
+wireListSearch($('bulk-label-filter-search'), $('bulk-label-filter'));
+wireListSearch($('bulk-add-labels-search'), $('bulk-add-labels-list'));
+wireListSearch($('bulk-remove-labels-search'), $('bulk-remove-labels-list'));
+
+wireLabelExclusion($('bulk-add-labels-list'), $('bulk-remove-labels-list'));
+
+// ---- tabs ----
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    $('single-view').style.display = tab.dataset.mode === 'single' ? 'grid' : 'none';
+    $('batch-view').style.display = tab.dataset.mode === 'batch' ? 'grid' : 'none';
+    $('bulk-view').style.display = tab.dataset.mode === 'bulk' ? 'grid' : 'none';
+    $('log-view').style.display = tab.dataset.mode === 'log' ? 'block' : 'none';
+    if (tab.dataset.mode === 'log') refreshLog();
+    if (tab.dataset.mode === 'bulk' && !bulkMeta) loadBulkMeta();
+  });
+});
+
+// ---- single mode ----
+$('entry-mode').addEventListener('change', () => {
+  $('ai-block').style.display = $('entry-mode').value === 'ai' ? 'block' : 'none';
+});
+
+$('type-select').addEventListener('change', async () => {
+  renderFields($('type-select').value);
+  currentAiFields = null;
+  await loadReferenceData($('type-select').value, 'labels-list', 'assignees-list', 'milestone-select');
+});
+
+// Re-suggest assignees (history first, roster-from-skills.md fallback) whenever
+// the user actually changes which labels are checked — non-destructive: only
+// checks newly-suggested assignees, never unchecks anything the user picked.
+async function refreshAssigneeSuggestions(typeKey, checkedLabels, listId) {
+  const res = await fetch(`/api/suggest-assignees?type=${encodeURIComponent(typeKey)}&labels=${encodeURIComponent(checkedLabels.join(','))}`);
+  const data = await res.json();
+  if (!data.suggested_assignees) return;
+  document.querySelectorAll(`#${listId} input[type=checkbox]`).forEach(cb => {
+    if (!data.suggested_assignees.includes(cb.value) || cb.checked) return;
+    cb.checked = true;
+    const lbl = cb.closest('label');
+    if (lbl && !lbl.querySelector('.suggested')) lbl.insertAdjacentHTML('beforeend', '<span class="suggested">suggested</span>');
+  });
+  bringCheckedToTop($(listId));  // programmatic checks above don't fire 'change', so sort explicitly
+}
+
+$('labels-list').addEventListener('change', (e) => {
+  if (e.target.type !== 'checkbox') return;
+  refreshAssigneeSuggestions($('type-select').value, getCheckedValues('labels-list'), 'assignees-list');
+});
+
+// Buttons stay disabled until there's something to act on — set once at init
+// (see bottom of file) and kept in sync by the input listeners below.
+function updateCreateButtonState() { $('create-btn').disabled = !$('title-input').value.trim(); }
+function updateAiGenerateButtonState() { $('ai-generate-btn').disabled = !$('ai-story').value.trim(); }
+function updateBatchSplitButtonState() { $('batch-split-btn').disabled = !$('batch-paste-notes').value.trim(); }
+function updateBatchGenerateButtonState() { $('batch-generate-btn').disabled = !$('batch-story').value.trim(); }
+
+$('title-input').addEventListener('input', updateCreateButtonState);
+$('ai-story').addEventListener('input', updateAiGenerateButtonState);
+$('batch-paste-notes').addEventListener('input', updateBatchSplitButtonState);
+$('batch-story').addEventListener('input', updateBatchGenerateButtonState);
+
+// Screenshot: either "Choose File" a saved image, or just Ctrl/Cmd+V a clipboard
+// screenshot anywhere on the page — whichever screenshot slot is relevant to the
+// currently-visible tab picks it up automatically. Assigning via DataTransfer
+// means the existing $('...screenshot').files[0] reads elsewhere need no changes.
+// Screenshot attachment, GitHub-comment-box style: click the dropzone to browse,
+// drag an image onto it, or just Ctrl/Cmd+V anywhere on the page — whichever
+// works. All three paths funnel through attachScreenshotFile so the file input,
+// thumbnail preview, and status text always stay in sync regardless of how the
+// image arrived. DataTransfer lets us set input.files programmatically (for
+// paste/drop) without breaking anything that reads $('...screenshot').files[0].
+function attachScreenshotFile(inputId, previewId, statusId, file) {
+  const dt = new DataTransfer();
+  const named = new File([file], file.name || 'screenshot.png', { type: file.type });
+  dt.items.add(named);
+  $(inputId).files = dt.files;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    $(previewId).src = e.target.result;
+    $(previewId).style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+
+  $(statusId).textContent = `Attached: ${named.name} (${Math.round(file.size / 1024)} KB)`;
+}
+
+function setupScreenshotDropzone(dropzoneId, inputId, previewId, statusId) {
+  const dropzone = $(dropzoneId);
+  const input = $(inputId);
+
+  dropzone.addEventListener('click', () => input.click());
+  dropzone.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.click(); } });
+  dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('drag-over'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'));
+  dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropzone.classList.remove('drag-over');
+    const file = Array.from(e.dataTransfer.files || []).find(f => f.type.startsWith('image/'));
+    if (file) attachScreenshotFile(inputId, previewId, statusId, file);
+  });
+  input.addEventListener('change', () => {
+    const file = input.files[0];
+    if (file) attachScreenshotFile(inputId, previewId, statusId, file);
+  });
+}
+
+setupScreenshotDropzone('ai-dropzone', 'ai-screenshot', 'ai-screenshot-preview', 'ai-screenshot-status');
+setupScreenshotDropzone('batch-dropzone', 'batch-screenshot', 'batch-screenshot-preview', 'batch-screenshot-status');
+
+document.addEventListener('paste', (e) => {
+  const items = e.clipboardData && e.clipboardData.items;
+  if (!items) return;
+  const imageItem = Array.from(items).find(i => i.type && i.type.startsWith('image/'));
+  if (!imageItem) return;  // a normal text paste — don't interfere with it
+  const file = imageItem.getAsFile();
+  if (!file) return;
+
+  const singleActive = $('single-view').style.display !== 'none';
+  const batchOneActive = $('batch-view').style.display !== 'none' && $('batch-one-block').style.display !== 'none';
+  if (singleActive) {
+    attachScreenshotFile('ai-screenshot', 'ai-screenshot-preview', 'ai-screenshot-status', file);
+  } else if (batchOneActive) {
+    attachScreenshotFile('batch-screenshot', 'batch-screenshot-preview', 'batch-screenshot-status', file);
+  }
+});
+
+$('title-input').addEventListener('blur', async () => {
+  const title = $('title-input').value.trim();
+  if (!title) { $('dup-warning').style.display = 'none'; return; }
+  const res = await fetch('/api/duplicate-check?title=' + encodeURIComponent(title));
+  const data = await res.json();
+  if (data.matches && data.matches.length) {
+    $('dup-warning').style.display = 'block';
+    $('dup-warning').className = 'msg err';
+    $('dup-warning').innerHTML = 'Possible duplicate(s):<br>' + data.matches.join('<br>');
+  } else {
+    $('dup-warning').style.display = 'none';
+  }
+});
+
+$('ai-generate-btn').addEventListener('click', async () => {
+  const typeKey = $('type-select').value;
+  const story = $('ai-story').value.trim();
+  if (!story) { $('ai-status').textContent = 'Description required'; return; }
+  $('ai-status').textContent = 'Generating…';
+  const form = new FormData();
+  form.append('type', typeKey);
+  form.append('story', story);
+  const file = $('ai-screenshot').files[0];
+  if (file) form.append('screenshot', file);
+
+  const res = await fetch('/api/ai-draft', { method: 'POST', body: form });
+  const data = await res.json();
+  if (data.error) { $('ai-status').textContent = 'Error: ' + data.error; return; }
+  $('ai-status').textContent = 'Draft ready — review below, then create.';
+  $('title-input').value = data.title;
+  updateCreateButtonState();  // title was set programmatically — 'input' event doesn't fire on that
+  currentAiFields = data.fields;
+  fillFieldValues(typeKey, data.fields);
+  $('preview-body').textContent = data.body;
+});
+
+$('preview-btn').addEventListener('click', async () => {
+  const typeKey = $('type-select').value;
+  const res = await fetch('/api/preview', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ type: typeKey, title: $('title-input').value, field_values: collectFieldValues(typeKey) })
+  });
+  const data = await res.json();
+  $('preview-body').textContent = data.body || data.error;
+});
+
+$('dry-run-toggle').addEventListener('change', () => {
+  $('live-warning').style.display = $('dry-run-toggle').checked ? 'none' : 'block';
+});
+
+$('create-btn').addEventListener('click', async () => {
+  const typeKey = $('type-select').value;
+  const title = $('title-input').value.trim();
+  const dryRun = $('dry-run-toggle').checked;
+  const payload = {
+    type: typeKey,
+    title: title,
+    field_values: collectFieldValues(typeKey),
+    labels: getCheckedValues('labels-list'),
+    assignees: getCheckedValues('assignees-list'),
+    milestone_number: $('milestone-select').value ? parseInt($('milestone-select').value) : null,
+    dry_run: dryRun,
+    mode_label: $('entry-mode').value === 'ai' ? 'AI-assisted (UI)' : 'Manual entry (UI)'
+  };
+  const res = await fetch('/api/create', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+  });
+  const data = await res.json();
+  const box = $('create-result');
+  if (data.error) {
+    box.innerHTML = `<div class="msg err">${data.error}</div>`;
+  } else if (data.dry_run) {
+    box.innerHTML = `<div class="msg ok">Dry run OK — would create "${data.title}" with labels=${JSON.stringify(data.labels)}, assignees=${JSON.stringify(data.assignees)}, milestone=${data.milestone_number}, type=${data.issue_type}</div>`;
+  } else {
+    box.innerHTML = `<div class="msg ok">Created <a href="${data.url}" target="_blank">#${data.issue_number}</a></div>`;
+  }
+});
+
+// ---- batch mode ----
+$('batch-type-select').addEventListener('change', async () => {
+  batchRefData = await loadReferenceData($('batch-type-select').value, 'batch-labels-list', 'batch-assignees-list', 'batch-milestone-select');
+  pendingBatchDrafts = [];
+  renderPendingList();
+});
+
+$('batch-labels-list').addEventListener('change', (e) => {
+  if (e.target.type !== 'checkbox') return;
+  refreshAssigneeSuggestions($('batch-type-select').value, getCheckedValues('batch-labels-list'), 'batch-assignees-list');
+});
+
+$('batch-submode-paste').addEventListener('click', () => {
+  $('batch-submode-paste').classList.add('active');
+  $('batch-submode-one').classList.remove('active');
+  $('batch-paste-block').style.display = 'block';
+  $('batch-one-block').style.display = 'none';
+});
+$('batch-submode-one').addEventListener('click', () => {
+  $('batch-submode-one').classList.add('active');
+  $('batch-submode-paste').classList.remove('active');
+  $('batch-one-block').style.display = 'block';
+  $('batch-paste-block').style.display = 'none';
+});
+
+$('batch-split-btn').addEventListener('click', async () => {
+  const typeKey = $('batch-type-select').value;
+  const notes = $('batch-paste-notes').value.trim();
+  if (!notes) { $('batch-split-status').textContent = 'Notes required'; return; }
+  $('batch-split-status').textContent = 'Splitting notes and generating drafts…';
+  $('batch-split-btn').disabled = true;
+  const res = await fetch('/api/ai-draft-batch', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ type: typeKey, notes })
+  });
+  const data = await res.json();
+  $('batch-split-btn').disabled = false;
+  if (data.error) { $('batch-split-status').textContent = 'Error: ' + data.error; return; }
+  $('batch-split-status').textContent = `Found ${data.drafts.length} issue(s) — review each below.`;
+  pendingBatchDrafts = data.drafts;
+  renderPendingList();
+});
+
+function renderPendingList() {
+  $('batch-pending-list').innerHTML = pendingBatchDrafts.map((d, i) => {
+    const labels = (batchRefData && batchRefData.labels) || [];
+    const assignees = (batchRefData && batchRefData.assignees) || [];
+    const suggestedLabels = (batchRefData && batchRefData.suggested_labels) || [];
+    const suggestedAssignees = (batchRefData && batchRefData.suggested_assignees) || [];
+    const labelsHtml = labels.map(l =>
+      `<label><input type="checkbox" data-pending="${i}" data-kind="label" value="${l}" ${suggestedLabels.includes(l) ? 'checked' : ''}>${l}</label>`
+    ).join('') || '<span class="small">No labels found</span>';
+    const assigneesHtml = assignees.map(a =>
+      `<label><input type="checkbox" data-pending="${i}" data-kind="assignee" value="${a}" ${suggestedAssignees.includes(a) ? 'checked' : ''}>${a}</label>`
+    ).join('') || '<span class="small">No assignees found</span>';
+    return `<div class="panel" style="margin-top:10px">
+      <b>${i + 1}. ${d.title}</b>
+      <pre class="preview" style="max-height:160px">${d.body}</pre>
+      <label>Labels</label><div class="checkbox-list">${labelsHtml}</div>
+      <label>Assignees</label><div class="checkbox-list">${assigneesHtml}</div>
+      <button class="pending-add-btn" data-idx="${i}">Add to batch</button>
+      <button class="pending-discard-btn secondary" data-idx="${i}">Discard</button>
+    </div>`;
+  }).join('');
+
+  document.querySelectorAll('.pending-add-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.idx);
+      const d = pendingBatchDrafts[idx];
+      const labels = Array.from(document.querySelectorAll(`input[data-pending="${idx}"][data-kind="label"]:checked`)).map(el => el.value);
+      const assignees = Array.from(document.querySelectorAll(`input[data-pending="${idx}"][data-kind="assignee"]:checked`)).map(el => el.value);
+      batchTickets.push({ title: d.title, field_values: d.fields, body: d.body, labels, assignees });
+      pendingBatchDrafts.splice(idx, 1);
+      renderPendingList();
+      renderBatchList();
+    });
+  });
+  document.querySelectorAll('.pending-discard-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      pendingBatchDrafts.splice(parseInt(btn.dataset.idx), 1);
+      renderPendingList();
+    });
+  });
+
+  document.querySelectorAll('#batch-pending-list .checkbox-list').forEach(el => {
+    el.classList.toggle('locked', autoModeOn);
+    el.querySelectorAll('input[type=checkbox]').forEach(cb => { cb.disabled = autoModeOn; });
+    bringCheckedToTop(el);
+    el.addEventListener('change', () => bringCheckedToTop(el));  // rebuilt each render — re-wire every time
+  });
+}
+
+$('batch-dry-run-toggle').addEventListener('change', () => {
+  $('batch-live-warning').style.display = $('batch-dry-run-toggle').checked ? 'none' : 'block';
+});
+
+$('batch-generate-btn').addEventListener('click', async () => {
+  const typeKey = $('batch-type-select').value;
+  const story = $('batch-story').value.trim();
+  if (!story) { $('batch-ai-status').textContent = 'Description required'; return; }
+  $('batch-ai-status').textContent = 'Generating…';
+  const form = new FormData();
+  form.append('type', typeKey);
+  form.append('story', story);
+  const file = $('batch-screenshot').files[0];
+  if (file) form.append('screenshot', file);
+
+  const res = await fetch('/api/ai-draft', { method: 'POST', body: form });
+  const data = await res.json();
+  if (data.error) { $('batch-ai-status').textContent = 'Error: ' + data.error; return; }
+  $('batch-ai-status').textContent = 'Draft ready.';
+  batchDraft = { title: data.title, field_values: data.fields, body: data.body };
+  $('batch-preview').style.display = 'block';
+  $('batch-preview').textContent = 'Title: ' + data.title + '\n\n' + data.body;
+  $('batch-draft-controls').style.display = 'block';
+});
+
+$('batch-add-btn').addEventListener('click', () => {
+  if (!batchDraft) return;
+  batchDraft.labels = getCheckedValues('batch-labels-list');
+  batchDraft.assignees = getCheckedValues('batch-assignees-list');
+  batchTickets.push(batchDraft);
+  renderBatchList();
+  resetBatchDraft();
+});
+
+$('batch-discard-btn').addEventListener('click', resetBatchDraft);
+
+function resetBatchDraft() {
+  batchDraft = null;
+  $('batch-story').value = '';
+  $('batch-screenshot').value = '';
+  $('batch-screenshot-preview').style.display = 'none';
+  $('batch-screenshot-status').textContent = '';
+  $('batch-ai-status').textContent = '';
+  $('batch-preview').style.display = 'none';
+  $('batch-draft-controls').style.display = 'none';
+  updateBatchGenerateButtonState();
+}
+
+function renderBatchList() {
+  $('batch-count').textContent = batchTickets.length;
+  $('batch-list').innerHTML = batchTickets.map((t, i) =>
+    `<div class="batch-item"><span>${i + 1}. ${t.title}</span><span class="meta">${t.labels.join(',')} ${t.assignees.join(',')} <button data-idx="${i}" class="danger remove-batch-item" style="margin:0;padding:2px 8px">x</button></span></div>`
+  ).join('') || '<span class="small">No tickets added yet.</span>';
+  $('batch-create-btn').disabled = batchTickets.length === 0;
+  document.querySelectorAll('.remove-batch-item').forEach(btn => {
+    btn.addEventListener('click', () => {
+      batchTickets.splice(parseInt(btn.dataset.idx), 1);
+      renderBatchList();
+    });
+  });
+}
+
+$('batch-create-btn').addEventListener('click', async () => {
+  const typeKey = $('batch-type-select').value;
+  const milestone = $('batch-milestone-select').value ? parseInt($('batch-milestone-select').value) : null;
+  const dryRun = $('batch-dry-run-toggle').checked;
+  const res = await fetch('/api/create-batch', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ type: typeKey, milestone_number: milestone, dry_run: dryRun, tickets: batchTickets })
+  });
+  const data = await res.json();
+  const box = $('batch-create-result');
+  if (data.error) { box.innerHTML = `<div class="msg err">${data.error}</div>`; return; }
+  box.innerHTML = data.results.map(r => {
+    if (r.error) return `<div class="msg err">${r.title || ''}: ${r.error}</div>`;
+    if (r.dry_run) return `<div class="msg ok">Dry run OK — "${r.title}"</div>`;
+    return `<div class="msg ok">Created <a href="${r.url}" target="_blank">#${r.issue_number}</a> — ${r.title}</div>`;
+  }).join('');
+  if (!dryRun) { batchTickets = []; renderBatchList(); }
+});
+
+// ---- bulk manage ----
+async function loadBulkMeta() {
+  $('bulk-load-status').textContent = 'Loading board metadata…';
+  const res = await fetch('/api/board/meta');
+  const data = await res.json();
+  if (data.error) {
+    $('bulk-load-status').innerHTML = `<span class="msg err" style="display:inline-block">${data.error}</span>`;
+    return;
+  }
+  bulkMeta = data;
+  $('bulk-load-status').innerHTML = data.warning
+    ? `Board: ${data.project_title}<div class="msg err" style="margin-top:6px">${data.warning}</div>`
+    : `Board: ${data.project_title}`;
+
+  $('bulk-status-filter').innerHTML = data.status_options.map(o =>
+    `<label class="chip"><input type="checkbox" value="${o.name}">${o.name}</label>`
+  ).join('');
+  $('bulk-label-filter').innerHTML = data.labels.map(l =>
+    `<label class="chip"><input type="checkbox" value="${l}">${l}</label>`
+  ).join('');
+  $('bulk-milestone-filter').innerHTML =
+    '<label class="chip"><input type="checkbox" value="none">(no sprint)</label>' +
+    data.milestones.map(m => `<label class="chip"><input type="checkbox" value="${m.number}">${m.title}</label>`).join('');
+  // Require at least one filter before allowing a load — with 1900+ tickets on this
+  // board, an unfiltered load would fetch (and, since rows default to selected,
+  // pre-select) every single ticket, which is exactly the footgun this avoids.
+  function updateBulkLoadButtonState() {
+    $('bulk-load-btn').disabled = !document.querySelector('#bulk-status-filter input:checked, #bulk-label-filter input:checked, #bulk-milestone-filter input:checked');
+  }
+  document.querySelectorAll('#bulk-status-filter .chip, #bulk-label-filter .chip, #bulk-milestone-filter .chip').forEach(chip => {
+    const cb = chip.querySelector('input');
+    cb.addEventListener('change', () => {
+      chip.classList.toggle('checked', cb.checked);
+      updateBulkLoadButtonState();
+    });
+  });
+
+  $('bulk-milestone-select').innerHTML = '<option value="">(remove from sprint)</option>' +
+    data.milestones.map(m => `<option value="${m.number}">${m.title}</option>`).join('');
+  $('bulk-status-select').innerHTML = data.status_options.map(o => `<option value="${o.id}">${o.name}</option>`).join('');
+  $('bulk-add-labels-list').innerHTML = data.labels.map(l =>
+    `<label><input type="checkbox" value="${l}">${l}</label>`
+  ).join('');
+  $('bulk-remove-labels-list').innerHTML = data.labels.map(l =>
+    `<label><input type="checkbox" value="${l}">${l}</label>`
+  ).join('');
+
+  ['bulk-status-filter', 'bulk-label-filter', 'bulk-milestone-filter', 'bulk-add-labels-list', 'bulk-remove-labels-list']
+    .forEach(id => bringCheckedToTop($(id)));
+  syncLabelExclusion($('bulk-add-labels-list'), $('bulk-remove-labels-list'));
+  syncLabelExclusion($('bulk-remove-labels-list'), $('bulk-add-labels-list'));
+}
+
+$('bulk-apply-milestone').addEventListener('change', () => { $('bulk-milestone-select').disabled = !$('bulk-apply-milestone').checked; });
+$('bulk-apply-status').addEventListener('change', () => { $('bulk-status-select').disabled = !$('bulk-apply-status').checked; });
+$('bulk-dry-run-toggle').addEventListener('change', () => {
+  $('bulk-live-warning').style.display = $('bulk-dry-run-toggle').checked ? 'none' : 'block';
+});
+
+$('bulk-load-btn').addEventListener('click', async () => {
+  const statuses = Array.from(document.querySelectorAll('#bulk-status-filter input:checked')).map(el => el.value);
+  const labels = Array.from(document.querySelectorAll('#bulk-label-filter input:checked')).map(el => el.value);
+  const milestones = Array.from(document.querySelectorAll('#bulk-milestone-filter input:checked')).map(el => el.value);
+  $('bulk-load-status').textContent = 'Loading tickets…';
+  const res = await fetch(`/api/board/items?status=${encodeURIComponent(statuses.join(','))}&labels=${encodeURIComponent(labels.join(','))}&milestone=${encodeURIComponent(milestones.join(','))}`);
+  const data = await res.json();
+  if (data.error) { $('bulk-load-status').textContent = 'Error: ' + data.error; return; }
+  bulkItems = data.items;
+  $('bulk-load-status').textContent = `Loaded ${bulkItems.length} ticket(s).`;
+  renderBulkTable();
+});
+
+function renderBulkTable() {
+  $('bulk-result-count').textContent = bulkItems.length;
+  // Rows default to selected — you already filtered down to the set you want to
+  // act on, so requiring an extra "select all" click just to use it would be
+  // pure friction. Deselect specific rows individually if you need to exclude one.
+  $('bulk-table-body').innerHTML = bulkItems.map((it, i) => `
+    <tr>
+      <td><input type="checkbox" class="bulk-row-check" data-idx="${i}" checked></td>
+      <td><a href="${it.url}" target="_blank">#${it.issue_number}</a> ${it.title}</td>
+      <td><span class="swimlane-pill">${it.status || '—'}</span></td>
+      <td>${(it.labels || []).map(l => `<span class="label-chip">${l}</span>`).join('') || '<span class="small">—</span>'}</td>
+      <td>${it.milestone_title || '<span class="small">—</span>'}</td>
+    </tr>`
+  ).join('') || `<tr><td colspan="5" class="small" style="padding:16px">No tickets match this filter.</td></tr>`;
+
+  $('bulk-select-all').checked = bulkItems.length > 0;
+  updateBulkApplyButton();
+  document.querySelectorAll('.bulk-row-check').forEach(cb => cb.addEventListener('change', updateBulkApplyButton));
+}
+
+$('bulk-select-all').addEventListener('change', () => {
+  const checked = $('bulk-select-all').checked;
+  document.querySelectorAll('.bulk-row-check').forEach(cb => { cb.checked = checked; });
+  updateBulkApplyButton();
+});
+
+function getSelectedBulkItems() {
+  return Array.from(document.querySelectorAll('.bulk-row-check:checked')).map(cb => bulkItems[parseInt(cb.dataset.idx)]);
+}
+
+function updateBulkApplyButton() {
+  const n = getSelectedBulkItems().length;
+  $('bulk-apply-btn').textContent = `Apply to ${n} selected`;
+  $('bulk-apply-btn').disabled = n === 0;
+}
+
+$('bulk-apply-btn').addEventListener('click', async () => {
+  const selected = getSelectedBulkItems();
+  if (!selected.length) return;
+
+  const addLabels = Array.from(document.querySelectorAll('#bulk-add-labels-list input:checked')).map(el => el.value);
+  const removeLabels = Array.from(document.querySelectorAll('#bulk-remove-labels-list input:checked')).map(el => el.value);
+
+  const payload = {
+    items: selected.map(it => ({ item_id: it.item_id, issue_number: it.issue_number, title: it.title, labels: it.labels })),
+    apply_milestone: $('bulk-apply-milestone').checked,
+    milestone_number: $('bulk-milestone-select').value ? parseInt($('bulk-milestone-select').value) : null,
+    apply_status: $('bulk-apply-status').checked,
+    status_option_id: $('bulk-status-select').value,
+    add_labels: addLabels,
+    remove_labels: removeLabels,
+    dry_run: $('bulk-dry-run-toggle').checked,
+  };
+
+  const res = await fetch('/api/board/bulk-update', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+  });
+  const data = await res.json();
+  const box = $('bulk-apply-result');
+  if (data.error) { box.innerHTML = `<div class="msg err">${data.error}</div>`; return; }
+  box.innerHTML = data.results.map(r => {
+    if (r.ok === false) return `<div class="msg err">#${r.issue_number} ${r.title || ''}: ${r.error}</div>`;
+    const label = r.dry_run ? 'Dry run OK' : 'Applied';
+    return `<div class="msg ok">${label} — #${r.issue_number} ${r.title || ''}</div>`;
+  }).join('');
+  if (!payload.dry_run) $('bulk-load-btn').click();  // refresh — some rows may no longer match the filter
+});
+
+// ---- log ----
+async function refreshLog() {
+  const res = await fetch('/api/ticket-log');
+  const data = await res.json();
+  $('log-list').innerHTML = data.tickets.map(t =>
+    `<div class="batch-item"><span>${t.title}</span><span class="meta">${t.type} · ${t.status || ''} · <a href="${t.url}" target="_blank">#${t.issue_number}</a></span></div>`
+  ).join('') || '<span class="small">No tickets logged yet.</span>';
+}
+$('log-refresh-btn').addEventListener('click', refreshLog);
+
+// ---- connect ----
+async function refreshAllData() {
+  await loadConfig();
+  renderFields($('type-select').value);
+  await loadReferenceData($('type-select').value, 'labels-list', 'assignees-list', 'milestone-select');
+  batchRefData = await loadReferenceData($('batch-type-select').value, 'batch-labels-list', 'batch-assignees-list', 'batch-milestone-select');
+  updateCreateButtonState();
+  updateAiGenerateButtonState();
+  updateBatchSplitButtonState();
+  updateBatchGenerateButtonState();
+}
+
+function resetRepoDependentState() {
+  // A repo switch invalidates anything tied to the previous repo's labels,
+  // assignees, milestones, or board — in-progress batch/bulk state included.
+  batchTickets = [];
+  pendingBatchDrafts = [];
+  bulkMeta = null;
+  bulkItems = [];
+  renderBatchList();
+  renderPendingList();
+  renderBulkTable();
+  $('bulk-status-filter').innerHTML = '';
+  $('bulk-label-filter').innerHTML = '';
+  $('bulk-milestone-filter').innerHTML = '';
+  $('bulk-add-labels-list').innerHTML = '';
+  $('bulk-remove-labels-list').innerHTML = '';
+  $('bulk-load-btn').disabled = true;
+}
+
+// Owner/Repo/Project/Token are locked (disabled) by default so an accidental
+// keystroke can't silently change what repo you're pointed at — Edit unlocks
+// them, Save commits (or Cancel reverts). The token field can never be
+// pre-filled with the real value (it's never sent back from the server), so
+// leaving it blank on Save means "keep the current token" — /api/connect
+// reuses the last-connected one server-side in that case.
+let connectOriginal = { owner: '', repo: '', project: '' };
+const CONNECT_FIELDS = ['connect-owner', 'connect-repo', 'connect-project', 'connect-token'];
+
+function setConnectEditing(editing) {
+  connectEditing = editing;
+  CONNECT_FIELDS.forEach(id => { $(id).disabled = !editing; });
+  $('connect-edit-btn').style.display = editing ? 'none' : 'inline-block';
+  $('connect-save-btn').style.display = editing ? 'inline-block' : 'none';
+  $('connect-cancel-btn').style.display = editing ? 'inline-block' : 'none';
+}
+
+$('connect-edit-btn').addEventListener('click', () => {
+  connectOriginal = {
+    owner: $('connect-owner').value,
+    repo: $('connect-repo').value,
+    project: $('connect-project').value,
+  };
+  $('connect-result').textContent = '';
+  setConnectEditing(true);
+  $('connect-owner').focus();
+});
+
+$('connect-cancel-btn').addEventListener('click', () => {
+  $('connect-owner').value = connectOriginal.owner;
+  $('connect-repo').value = connectOriginal.repo;
+  $('connect-project').value = connectOriginal.project;
+  $('connect-token').value = '';
+  $('connect-result').textContent = '';
+  setConnectEditing(false);
+});
+
+$('connect-save-btn').addEventListener('click', async () => {
+  const payload = {
+    owner: $('connect-owner').value.trim(),
+    repo: $('connect-repo').value.trim(),
+    project_name: $('connect-project').value.trim(),
+    token: $('connect-token').value.trim(),  // blank = keep the currently-connected token
+  };
+  if (!payload.owner || !payload.repo) {
+    $('connect-result').innerHTML = '<span style="color:var(--err)">Owner and repo are required.</span>';
+    return;
+  }
+  $('connect-save-btn').disabled = true;
+  $('connect-result').textContent = 'Connecting…';
+  const res = await fetch('/api/connect', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+  });
+  const data = await res.json();
+  $('connect-save-btn').disabled = false;
+  if (!data.ok) {
+    $('connect-result').innerHTML = `<span style="color:var(--err)">${data.error}</span>`;
+    return;
+  }
+  $('connect-result').innerHTML = `<span style="color:var(--ok)">Connected to ${data.owner}/${data.repo}.</span>`;
+  setConnectEditing(false);
+  resetRepoDependentState();
+  await refreshAllData();
+});
+
+// ---- init ----
+(async function init() {
+  await refreshAllData();
+})();
+</script>
+</body>
+</html>

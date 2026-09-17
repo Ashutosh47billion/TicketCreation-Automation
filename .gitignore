@@ -1,0 +1,8 @@
+.env
+.venv/
+.idea/
+.claude/
+skills/
+ticket_log.json
+__pycache__/
+*.pyc

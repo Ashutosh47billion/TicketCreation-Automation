@@ -1,0 +1,21 @@
+namespace: utility
+
+replicaCount: 1
+
+image:
+  repository: labs47b/ticketautomation
+  tag: "01"
+  pullPolicy: IfNotPresent
+imagePullSecrets:
+  - name: dockerregistryi
+
+service:
+  type: ClusterIP
+  port: 5000
+secret:
+  name: "ticket-automation-secrets"
+  keys:
+    githubToken: GITHUB_TOKEN
+    aiApiKey: AI_API_KEY
+    geminiApiKey: GEMINI_API_KEY
+

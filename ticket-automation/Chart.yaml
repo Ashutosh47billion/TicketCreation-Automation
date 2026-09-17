@@ -1,0 +1,12 @@
+apiVersion: v2
+name: ticket-automation
+description: Custom Helm chart for the PointingFish Ticket Creation Automation tool (Flask + GitHub Issues)
+type: application
+version: 1.0.0
+appVersion: "01"
+keywords:
+  - ticket-automation
+  - github
+  - flask
+maintainers:
+  - name: PointingFish
